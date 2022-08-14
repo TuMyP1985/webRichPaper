@@ -1,11 +1,17 @@
 package com.example.web.utils;
 
 import com.example.web.model.RichPaper;
+import org.apache.tomcat.util.json.JSONParser;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.util.*;
 
 public class ExecutValue {
     public static List<RichPaper> lists = new ArrayList<>();
@@ -14,7 +20,7 @@ public class ExecutValue {
 
         addValues("GAZP", "Газпром");
         addValues("SBER", "Сбербанк ПАО");
-        addValues("SBER_p","Сбербанк (прив.) ");
+        addValues("SBERP","Сбербанк (прив.) ");
         addValues("MGNT", "ОАО Магнит");
         addValues("LKOH", "НК Лукойл ПАО");
         addValues("GMKN", "ГМК Норильский Никель ПАО");
@@ -44,10 +50,41 @@ public class ExecutValue {
         run.start(); // заводим
     }
 
-    public static String lastPrice(String val){
+    public static String lastPrice(String val) {
 
+        String rez = "";
+        try {
+            String url = "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities/" + val + ".json?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST";
+
+            URL obj = new URL(url);
+            HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
+
+            connection.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            String jsonString = response.toString();
+
+            JSONObject obj1 = new JSONObject(jsonString);
+            rez = ((JSONArray)
+                    ((JSONArray)
+                            ((JSONObject) obj1.get("marketdata"))
+                    .get("data"))
+                    .get(0))
+                    .get(1)
+                    .toString();
+
+
+        }catch (Exception e){rez = e.getMessage()}
 //        https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities/SBER.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=LAST
-//        "https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities/"+val+".json?iss.meta=off&iss.only=marketdata&marketdata.columns=SECID,LAST"
-        return "123321";
+//
+        return rez;
     }
 }
